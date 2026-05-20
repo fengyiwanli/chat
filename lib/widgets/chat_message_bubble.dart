@@ -15,7 +15,7 @@ class ChatMessageBubble extends StatelessWidget {
   final VoidCallback onLongPressMessage;
   final VoidCallback? onImageTap;
   final VoidCallback? onImageLongPress;
-
+  final String? timeText; 
   const ChatMessageBubble({
     super.key,
     required this.message,
@@ -29,6 +29,7 @@ class ChatMessageBubble extends StatelessWidget {
     required this.onLongPressMessage,
     this.onImageTap,
     this.onImageLongPress,
+    this.timeText,    
   });
 
   String _cleanMessageText(ChatMessage msg) {
@@ -198,7 +199,24 @@ class ChatMessageBubble extends StatelessWidget {
             : Theme.of(context).colorScheme.onPrimaryContainer)  // 浅色模式：跟随主题文字色
         : null,                               // 非上帝指令保持默认
   ),
+  
 ),
+if (timeText != null)
+    Padding(
+      padding: const EdgeInsets.only(top: 4.0),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Text(
+          timeText!,
+          style: TextStyle(
+            fontSize: 11,
+            color: isMe
+                ? Colors.white.withOpacity(0.7)
+                : Colors.grey.shade600,
+          ),
+        ),
+      ),
+    ),
           if (!isMe && !isNarration && message.sender != '系统' && statusWidget != null)
             statusWidget!,
           if (message.imageUrl != null) _buildImageContent(context),

@@ -16,7 +16,7 @@ import '../widgets/chat/chat_input_bar.dart';
 import '../utils/app_dialogs.dart';
 import '../utils/app_snackbars.dart';
 import 'package:intl/intl.dart'; // ✅ 正确
-
+import '../widgets/chat_message_bubble.dart';
 
 import 'package:path_provider/path_provider.dart';
 
@@ -3793,235 +3793,47 @@ if (_isLoading) {
                       return const SizedBox.shrink();
                     }
                     final message = _messages[msgIndex];
-                    final isMe = message.isUser;
-                    final isNarration = message.sender == '📖 旁白';
-                    final color = isMe
-                        ? Colors.deepPurple
-                        : isNarration
-                        ? Colors.brown
-                        : (_characterColors[message.sender] ?? Colors.grey);
+final isMe = message.isUser;
+final isNarration = message.sender == '📖 旁白';
+final color = isMe
+    ? Colors.deepPurple
+    : isNarration
+        ? Colors.brown
+        : (_characterColors[message.sender] ?? Colors.grey);
 
-                    // 消息动画与内容（保持你原有的完整消息气泡代码）
-                    final isAnimating = _animatingIndices.contains(msgIndex);
-                    Widget messageContent = Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        crossAxisAlignment: isMe
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                        children: [
-                          if (!isMe)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                left: 12,
-                                bottom: 2,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    message.sender,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: color,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          Row(
-                            mainAxisAlignment: isMe
-                                ? MainAxisAlignment.end
-                                : MainAxisAlignment.start,
-                            children: [
-                              if (!isMe)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: Builder(
-                                    builder: (_) {
-                                      final senderChar = _participants
-                                          .firstWhere(
-                                            (c) => c.name == message.sender,
-                                            orElse: () => Character(
-                                              name: '',
-                                              personality: '',
-                                              attire: '',
-                                            ),
-                                          );
-                                      final avatarPath = senderChar.avatarPath;
-                                      final hasAvatar =
-                                          avatarPath.isNotEmpty &&
-                                          File(avatarPath).existsSync();
-                                      return CircleAvatar(
-                                        radius: 14,
-                                        backgroundColor: hasAvatar
-                                            ? null
-                                            : color.withOpacity(0.2),
-                                        backgroundImage: hasAvatar
-                                            ? FileImage(File(avatarPath))
-                                            : null,
-                                        child: hasAvatar
-                                            ? null
-                                            : Text(
-                                                message.sender[0],
-                                                style: TextStyle(
-                                                  color: color,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                      );
-                                    },
-                                  ),
-                                ),
+// 获取头像
+String? avatarPath;
+if (!isMe) {
+  final senderChar = _participants.firstWhere(
+    (c) => c.name == message.sender,
+    orElse: () => Character(name: '', personality: '', attire: ''),
+  );
+  avatarPath = senderChar.avatarPath.isNotEmpty && File(senderChar.avatarPath).existsSync()
+      ? senderChar.avatarPath
+      : null;
+}
 
-                              // 优化后的消息气泡代码
-Flexible(
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    constraints: BoxConstraints(
-      maxWidth: MediaQuery.of(context).size.width * 0.75,
-    ),
-    decoration: BoxDecoration(
-      // ✅ 核心修复：气泡自动跟随主题
-      color: isMe
-          ? Theme.of(context).colorScheme.primary
-          : Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF2D2D2D) // 深色气泡
-              : Colors.white, // 浅色气泡
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: isMe
-          ? null
-          : [
-              BoxShadow(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.black12
-                    : Colors.grey.withOpacity(0.08),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SelectableText(
-          _sanitizeText(_cleanMessageText(message)),
-          style: TextStyle(
-            fontSize: 15,
-            height: 1.5,
-            // ✅ 文字自动变色：深色白字 / 浅色黑字
-            color: isMe
-                ? Colors.white
-                : Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : const Color(0xFF1E293B),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 6.0),
-          child: Text(
-            DateFormat('HH:mm').format(message.timestamp),
-            style: TextStyle(
-              fontSize: 11,
-              color: isMe
-                  ? Colors.white.withOpacity(0.7)
-                  : Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white70
-                      : const Color(0xFF94A3B8),
-            ),
-          ),
-        ),
-        if (!isMe && !isNarration && message.sender != '系统')
-          _buildRoleStatusTile(message),
-        if (message.imageUrl != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: GestureDetector(
-              onTap: () => _showFullScreenImage(context, message.imageUrl!),
-              onLongPress: () => _showImageLongPressMenu(context, message),
-              behavior: HitTestBehavior.opaque,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: message.imageUrl!.startsWith('http')
-                    ? CachedNetworkImage(
-                        imageUrl: message.imageUrl!,
-                        width: 200,
-                        height: 200,
-                        fit: BoxFit.cover,
-                        memCacheWidth: 200,
-                        memCacheHeight: 200,
-                      )
-                    : Image.file(
-                        File(message.imageUrl!),
-                        width: 200,
-                        height: 200,
-                        fit: BoxFit.cover,
-                        cacheWidth: 200,
-                        cacheHeight: 200,
-                      ),
-              ),
-            ),
-          ),
-      ],
-    ),
-  ),
-),                             
-                              if (isMe)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor: Colors.deepPurple.shade100,
-                                    child: Text(
-                                      _userName.isNotEmpty ? _userName[0] : '我',
-                                      style: const TextStyle(
-                                        color: Colors.deepPurple,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
+final isAnimating = _animatingIndices.contains(msgIndex);
+final statusWidget = (!isMe && !isNarration && message.sender != '系统')
+    ? _buildRoleStatusTile(message)
+    : null;
 
-                    final fullMessage = GestureDetector(
-                      onLongPress: () => _showMessageContextMenu(msgIndex),
-                      child: messageContent,
-                    );
+final timeStr = DateFormat('HH:mm').format(message.timestamp);
 
-                    if (isAnimating) {
-                      return TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
-                            child: Transform.translate(
-                              offset: Offset(0, 20 * (1 - value)),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: fullMessage,
-                      );
-                    } else {
-                      return fullMessage;
-                    }
+return ChatMessageBubble(
+  message: message,
+  isMe: isMe,
+  isNarration: isNarration,
+  color: color,
+  userName: _userName,
+  avatarPath: avatarPath,
+  isAnimating: isAnimating,
+  statusWidget: statusWidget,
+  onLongPressMessage: () => _showMessageContextMenu(msgIndex),
+  onImageTap: message.imageUrl != null ? () => _showFullScreenImage(context, message.imageUrl!) : null,
+  onImageLongPress: message.imageUrl != null ? () => _showImageLongPressMenu(context, message) : null,
+  timeText: timeStr,
+);
                   },
                 ),
                 if (!_isNearBottom)

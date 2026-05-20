@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_page.dart'; // 👉 确认这是你首页的正确路径
 import 'services/theme_provider.dart'; // 👉 导入你的ThemeProvider
-
+import 'package:provider/provider.dart';
+import 'providers/chat_provider.dart';
 void main() {
   // 先初始化Flutter绑定（解决Binding错误）
   WidgetsFlutterBinding.ensureInitialized();

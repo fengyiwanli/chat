@@ -1,7 +1,7 @@
 import 'dart:convert'; // 用于 jsonDecod
 
 class ChatMessage {
-  final String text;
+   String text;
   final bool isUser;
   final String sender;
   final DateTime timestamp;

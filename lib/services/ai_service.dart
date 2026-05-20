@@ -94,7 +94,58 @@ class AiService {
       );
     }
   }
+static Stream<String> callChatApiStream({
+  required String modelLabel,
+  required List<Map<String, dynamic>> messages,
+}) async* {
+  final configs = await StorageService.loadChatApiConfigs();
+  final config = configs.cast<Map<String, dynamic>?>().firstWhere(
+    (c) => c!['label'] == modelLabel,
+    orElse: () => null,
+  );
+  if (config == null) {
+    yield '错误：未找到 AI 配置';
+    return;
+  }
 
+  final url = config['url']!;
+  final model = config['model']!;
+  final apiKey = config['apiKey']!;
+
+  final client = http.Client();
+  final request = http.Request('POST', Uri.parse(url));
+  request.headers.addAll({
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $apiKey',
+  });
+  request.body = jsonEncode({
+    'model': model,
+    'messages': messages,
+    'temperature': 0.9,
+    'stream': true,  // 关键：开启流式
+  });
+
+  final response = await client.send(request);
+  await for (final chunk in response.stream.transform(utf8.decoder)) {
+    for (final line in chunk.split('\n')) {
+      if (line.startsWith('data: ')) {
+        final data = line.substring(6);
+        if (data == '[DONE]') {
+          client.close();
+          return;
+        }
+        try {
+          final json = jsonDecode(data);
+          final content = json['choices'][0]['delta']['content'] ?? '';
+          if (content.isNotEmpty) {
+            yield content;
+          }
+        } catch (_) {}
+      }
+    }
+  }
+  client.close();
+}
   static Future<Map<String, String>?> parseCharacterText(
     String text, {
     String modelLabel = '', // 可传空，内部尝试获取

@@ -67,7 +67,9 @@ final ValueChanged<String> onTextChanged;
                 // 注意：ChatInputBar 自己是 StatelessWidget，
                 // 所以文本变化需要通过父组件 setState 传递进来。
                 // 我们暂时不在这里处理，因为父组件会在 onChanged 里自己调用 setState。
+                onTextChanged(textController.text);
               },
+              
             ),
           ),
 
