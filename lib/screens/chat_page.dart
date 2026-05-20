@@ -12,7 +12,7 @@ import '../widgets/small_button.dart';
 import '../services/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
-
+import '../widgets/chat/chat_input_bar.dart';
 import '../utils/app_dialogs.dart';
 import '../utils/app_snackbars.dart';
 import 'package:intl/intl.dart'; // ✅ 正确
@@ -4079,106 +4079,25 @@ Flexible(
           ),
 
           // ── 输入框区域 ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              // ✅ 自动跟随主题：浅色白 / 深色深灰
-    color: Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF1E1E1E)
-        : Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade300,
-                  offset: const Offset(0, -1),
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    focusNode: _textFocusNode,
-                    minLines: 1,
-                    maxLines: _isInputExpanded ? 6 : 1,
-                     onTap: () {
-    
+          ChatInputBar(
+            onTextChanged: (value) {
+  setState(() {});  // 让按钮颜色实时更新
+},
+  textController: _textController,
+  focusNode: _textFocusNode,
+  isExpanded: _isInputExpanded,
+  onSend: _sendMessage,
+  onToggleExpand: () {
+    setState(() => _isInputExpanded = !_isInputExpanded);
+    if (_isInputExpanded) {
+      _textFocusNode.requestFocus();
+    }
   },
-                    textInputAction: TextInputAction.send,
-                    onChanged: (text) {
-      setState(() {});
-    },
-                    decoration: const InputDecoration(
-                      hintText: '输入消息...',
-                      border: InputBorder.none,
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(Icons.add_circle_outline, color: primaryColor),
-                  tooltip: '更多',
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'mention':
-                        _showMentionPicker();
-                        break;
-                      case 'image':
-                        _generateForLatestAi();
-                        break;
-                      case 'expand':
-  setState(() => _isInputExpanded = !_isInputExpanded);
-  if (_isInputExpanded) {
-    _textFocusNode.requestFocus();
-
-    
-  }
-break;
-                    }
-                  },
-                  itemBuilder: (ctx) => [
-                    const PopupMenuItem(
-                      value: 'mention',
-                      child: ListTile(
-                        leading: Icon(Icons.alternate_email),
-                        title: Text('提及角色'),
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'image',
-                      child: ListTile(
-                        leading: Icon(Icons.photo_library_outlined),
-                        title: Text('生成图片'),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'expand',
-                      child: ListTile(
-                        leading: Icon(
-                          _isInputExpanded
-                              ? Icons.expand_less
-                              : Icons.expand_more,
-                        ),
-                        title: Text(_isInputExpanded ? '收起输入框' : '展开输入框'),
-                      ),
-                    ),
-                  ],
-                ),
-                // 优化后的发送按钮（空输入时禁用）
-IconButton(
-  icon: const Icon(Icons.send),
-  color: _textController.text.trim().isEmpty
-      ? const Color.fromARGB(255, 26, 3, 233)
-      : Theme.of(context).colorScheme.primary,
-  onPressed: _textController.text.trim().isEmpty
-      ? null
-      : _sendMessage,
-)
-              ],
-            ),
-          ),
-        
+  onMention: _showMentionPicker,
+  onGenerateImage: _generateForLatestAi,
+  primaryColor: primaryColor,
+  text: _textController.text,
+),
         
         
         ],
