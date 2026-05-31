@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../controllers/chat_controller.dart';
+import '../widgets/chat/scene_card_manager.dart';
+import '../widgets/chat/typing_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/chat_message.dart';
 import '../models/character.dart';
@@ -20,28 +23,6 @@ import '../widgets/chat_message_bubble.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-class ChatController extends ChangeNotifier {
-  final String sessionId;
-  List<String> memoryEvents = [];
-
-  ChatController({required this.sessionId});
-
-  // 添加记忆事件（原有逻辑 + RAG 存储）
-  Future<void> addMemoryEvent(String event) async {
-    memoryEvents.add(event);
-    // 新增：向量化存储
-    try {
-      
-      debugPrint('RAG 已存入记忆: $event');
-    } catch (e) {
-      debugPrint('RAG 存入失败: $e');
-    }
-    notifyListeners();
-  }
-
-  // 构建系统提示词时检索相关记忆
- 
-}
 class ChatPage extends StatefulWidget {
   final List<Character> characters;
   final String sessionId;
@@ -2262,7 +2243,7 @@ $replyText
   void _manageSceneCards() async {
     await showDialog(
       context: context,
-      builder: (context) => _SceneCardManager(
+      builder: (context) => SceneCardManager(
         cards: _sceneCards,
         onUpdated: (cards) async {
           _sceneCards = cards;
@@ -3785,7 +3766,7 @@ if (_isLoading) {
           '${_activeCharacter.name}正在输入',
           style: TextStyle(color: Colors.grey.shade600),
         ),
-        const _TypingIndicator(), // 打字动画
+        const TypingIndicator(), // 打字动画
       ],
     ),
   );
@@ -3920,172 +3901,3 @@ return ChatMessageBubble(
 
 
 
-// 场景卡管理组件
-class _SceneCardManager extends StatefulWidget {
-  final List<Map<String, String>> cards;
-  final ValueChanged<List<Map<String, String>>> onUpdated;
-
-  const _SceneCardManager({required this.cards, required this.onUpdated});
-
-  @override
-  State<_SceneCardManager> createState() => _SceneCardManagerState();
-}
-
-class _SceneCardManagerState extends State<_SceneCardManager> {
-  late List<Map<String, String>> _cards;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _cards = List.from(widget.cards);
-  }
-
-  void _addCard() {
-    final titleCtrl = TextEditingController();
-    final eventCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('添加场景卡'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleCtrl,
-              decoration: const InputDecoration(
-                labelText: '标题',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: eventCtrl,
-              decoration: const InputDecoration(
-                labelText: '事件描述',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (titleCtrl.text.isNotEmpty && eventCtrl.text.isNotEmpty) {
-                _cards.add({'title': titleCtrl.text, 'event': eventCtrl.text});
-                setState(() {});
-                widget.onUpdated(_cards);
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text('添加'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _deleteCard(int index) {
-    _cards.removeAt(index);
-    setState(() {});
-    widget.onUpdated(_cards);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('管理场景卡'),
-      content: SizedBox(
-        width: double.maxFinite,
-        height: 400,
-        child: _cards.isEmpty
-            ? const Center(child: Text('暂无场景卡'))
-            : ListView.builder(
-                itemCount: _cards.length,
-                itemBuilder: (_, i) => ListTile(
-                  title: Text(_cards[i]['title']!),
-                  subtitle: Text(
-                    _cards[i]['event']!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteCard(i),
-                  ),
-                ),
-              ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('关闭'),
-        ),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.add),
-          label: const Text('新场景卡'),
-          onPressed: _addCard,
-        ),
-      ],
-    );
-  }
-}
-// 打字动画组件（放在文件最底部）
-class _TypingIndicator extends StatefulWidget {
-  const _TypingIndicator();
-
-  @override
-  State<_TypingIndicator> createState() => _TypingIndicatorState();
-}
-
-class _TypingIndicatorState extends State<_TypingIndicator> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _dot1;
-  late Animation<double> _dot2;
-  late Animation<double> _dot3;
-
-  @override
-  void initState() {
-    super.initState();
-    // 创建动画控制器，1.2秒循环一次
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
-
-    // 三个点依次淡入淡出
-    _dot1 = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4)),
-    );
-    _dot2 = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.2, 0.6)),
-    );
-    _dot3 = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.8)),
-    );
-  }
-
-  @override
-  void dispose() {
-    
-    _controller.dispose(); // 释放动画控制器
-    
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        FadeTransition(opacity: _dot1, child: const Text('.', style: TextStyle(fontSize: 20))),
-        FadeTransition(opacity: _dot2, child: const Text('.', style: TextStyle(fontSize: 20))),
-        FadeTransition(opacity: _dot3, child: const Text('.', style: TextStyle(fontSize: 20))),
-      ],
-    );
-  }
-}
