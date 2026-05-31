@@ -1,203 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/app_settings.dart';
+import '../widgets/settings/theme_presets.dart';
 import '../services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/theme_provider.dart';
 import 'dart:convert';
 
-// ==================== 数据模型 ====================
-
-/// API 配置模型
-class ApiConfig {
-  String label;
-  String url;
-  String? model;
-  String? apiKey;
-  String? token;
-  String requestType;
-  String? bodyTemplate;
-
-  ApiConfig({
-    required this.label,
-    required this.url,
-    this.model,
-    this.apiKey,
-    this.token,
-    this.requestType = 'get',
-    this.bodyTemplate,
-  });
-
-  factory ApiConfig.fromMap(Map<String, String> map) => ApiConfig(
-        label: map['label'] ?? '',
-        url: map['url'] ?? '',
-        model: map['model'],
-        apiKey: map['apiKey'],
-        token: map['token'],
-        requestType: map['requestType'] ?? 'get',
-        bodyTemplate: map['bodyTemplate'],
-      );
-
-  Map<String, String> toMap() => {
-        'label': label,
-        'url': url,
-        if (model != null) 'model': model!,
-        if (apiKey != null) 'apiKey': apiKey!,
-        if (token != null) 'token': token!,
-        'requestType': requestType,
-        if (bodyTemplate != null) 'bodyTemplate': bodyTemplate!,
-      };
-
-  ApiConfig copyWith({
-    String? label,
-    String? url,
-    String? model,
-    String? apiKey,
-    String? token,
-    String? requestType,
-    String? bodyTemplate,
-  }) =>
-      ApiConfig(
-        label: label ?? this.label,
-        url: url ?? this.url,
-        model: model ?? this.model,
-        apiKey: apiKey ?? this.apiKey,
-        token: token ?? this.token,
-        requestType: requestType ?? this.requestType,
-        bodyTemplate: bodyTemplate ?? this.bodyTemplate,
-      );
-}
-
-/// 自定义风格模型
-class CustomStyle {
-  String id;
-  String name;
-  String prompt;
-
-  CustomStyle({
-    required this.id,
-    required this.name,
-    required this.prompt,
-  });
-
-  factory CustomStyle.create({required String name, required String prompt}) =>
-      CustomStyle(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
-        prompt: prompt,
-      );
-
-  Map<String, String> toMap() => {'id': id, 'name': name, 'prompt': prompt};
-
-  factory CustomStyle.fromMap(Map<String, String> map) => CustomStyle(
-        id: map['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        name: map['name'] ?? '未命名',
-        prompt: map['prompt'] ?? '',
-      );
-
-  CustomStyle copyWith({String? name, String? prompt}) => CustomStyle(
-        id: id,
-        name: name ?? this.name,
-        prompt: prompt ?? this.prompt,
-      );
-}
-
-/// 应用设置数据类
-class AppSettings {
-  String userName;
-  String userPersonality;
-  bool showEmotion;
-  bool autoSummaryEnabled;
-  int autoSummaryThreshold;
-  int maxMemoryCount;
-  Color themeColor;
-  String imagePrefixModifier;
-  String imageSuffixModifier;
-  String narrationPrompt;
-  String branchPrompt;
-  String randomEventPrompt;
-  String summaryPrompt;
-  bool dynamicStatusEnabled;
-  String dynamicStatusPrompt;
-  String statusPanelTemplate;
-  Map<String, bool> statusPanelFields;
-  bool highFreqStatusUpdate;
-  bool statusAutoExpand;
-  bool showClearInputBtn;
-  bool imgLinkStatus;
-
-  AppSettings({
-    this.userName = '我',
-    this.userPersonality = '',
-    this.showEmotion = true,
-    this.autoSummaryEnabled = false,
-    this.autoSummaryThreshold = 20,
-    this.maxMemoryCount = 5,
-    this.themeColor = Colors.deepPurple,
-    this.imagePrefixModifier = '',
-    this.imageSuffixModifier = '',
-    this.narrationPrompt = '',
-    this.branchPrompt = '',
-    this.randomEventPrompt = '',
-    this.summaryPrompt = '',
-    this.dynamicStatusEnabled = false,
-    this.dynamicStatusPrompt = '',
-    this.statusPanelTemplate = '{{label}}：{{value}}',
-    this.statusPanelFields = const {},
-    this.highFreqStatusUpdate = true,
-    this.statusAutoExpand = false,
-    this.showClearInputBtn = true,
-    this.imgLinkStatus = true,
-  });
-
-  AppSettings copyWith({
-    String? userName,
-    String? userPersonality,
-    bool? showEmotion,
-    bool? autoSummaryEnabled,
-    int? autoSummaryThreshold,
-    int? maxMemoryCount,
-    Color? themeColor,
-    String? imagePrefixModifier,
-    String? imageSuffixModifier,
-    String? narrationPrompt,
-    String? branchPrompt,
-    String? randomEventPrompt,
-    String? summaryPrompt,
-    bool? dynamicStatusEnabled,
-    String? dynamicStatusPrompt,
-    String? statusPanelTemplate,
-    
-    Map<String, bool>? statusPanelFields,
-    bool? highFreqStatusUpdate,
-    bool? statusAutoExpand,
-    bool? showClearInputBtn,
-    bool? imgLinkStatus,
-  }) =>
-      AppSettings(
-        userName: userName ?? this.userName,
-        userPersonality: userPersonality ?? this.userPersonality,
-        showEmotion: showEmotion ?? this.showEmotion,
-        autoSummaryEnabled: autoSummaryEnabled ?? this.autoSummaryEnabled,
-        autoSummaryThreshold: autoSummaryThreshold ?? this.autoSummaryThreshold,
-        maxMemoryCount: maxMemoryCount ?? this.maxMemoryCount,
-        themeColor: themeColor ?? this.themeColor,
-        imagePrefixModifier: imagePrefixModifier ?? this.imagePrefixModifier,
-        imageSuffixModifier: imageSuffixModifier ?? this.imageSuffixModifier,
-        narrationPrompt: narrationPrompt ?? this.narrationPrompt,
-        branchPrompt: branchPrompt ?? this.branchPrompt,
-        randomEventPrompt: randomEventPrompt ?? this.randomEventPrompt,
-        summaryPrompt: summaryPrompt ?? this.summaryPrompt,
-        dynamicStatusEnabled: dynamicStatusEnabled ?? this.dynamicStatusEnabled,
-        dynamicStatusPrompt: dynamicStatusPrompt ?? this.dynamicStatusPrompt,
-        statusPanelTemplate: statusPanelTemplate ?? this.statusPanelTemplate,
-        statusPanelFields: statusPanelFields ?? this.statusPanelFields,
-        highFreqStatusUpdate: highFreqStatusUpdate ?? this.highFreqStatusUpdate,
-        statusAutoExpand: statusAutoExpand ?? this.statusAutoExpand,
-        showClearInputBtn: showClearInputBtn ?? this.showClearInputBtn,
-        imgLinkStatus: imgLinkStatus ?? this.imgLinkStatus,
-      );
-}
-
-// ==================== 设置控制器 ====================
 
 class SettingsController extends ChangeNotifier {
   final ThemeProvider themeProvider;
@@ -662,7 +470,7 @@ bool _imgLinkStatus = true;
       _showClearInputBtn = prefs.getBool('show_clear_input_btn') ?? true;
       _imgLinkStatus = prefs.getBool('img_link_status') ?? true;
       _currentThemeIndex = prefs.getInt('app_theme_index') ?? 0;
-      _applyTheme(_presetThemes[_currentThemeIndex]);
+      _applyTheme(presetThemes[_currentThemeIndex]);
     });
   }
 // 👇 新增：应用主题
@@ -752,7 +560,7 @@ MaterialColor _createMaterialColor(Color color) {
     });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('app_theme_index', index);
-    _applyTheme(_presetThemes[index]);
+    _applyTheme(presetThemes[index]);
   }
   // 保存设置
   Future<void> _saveSetting(String key, bool value) async {
@@ -939,9 +747,9 @@ ExpansionTile(
           crossAxisSpacing: 8,
           childAspectRatio: 2.0,
         ),
-        itemCount: _presetThemes.length,
-        itemBuilder: (_, i) => _ThemePreviewCard(
-          theme: _presetThemes[i],
+        itemCount: presetThemes.length,
+        itemBuilder: (_, i) => ThemePreviewCard(
+          theme: presetThemes[i],
           isSelected: _currentThemeIndex == i,
           onTap: () => _updateTheme(i),
         ),
@@ -2115,180 +1923,3 @@ class _StyleDialogState extends State<_StyleDialog> {
 }
 
 // 完整主题包模型
-class AppTheme {
-  final String name;
-  final Color primary;
-  final Color secondary;
-  final Color background;
-  final Color surface;
-  final Color textPrimary;
-  final Color textSecondary;
-  final Brightness brightness;
-
-  AppTheme({
-    required this.name,
-    required this.primary,
-    required this.secondary,
-    required this.background,
-    required this.surface,
-    required this.textPrimary,
-    required this.textSecondary,
-    required this.brightness,
-  });
-}
-
-// 预设主题包（8套，4列×2行完美填满）
-final List<AppTheme> _presetThemes = [
-  // 浅色主题（4个）
-  AppTheme(
-    name: '深海蓝',
-    primary: Color(0xFF1976D2),
-    secondary: Color(0xFF42A5F5),
-    background: Color(0xFFFAFAFA),
-    surface: Color(0xFFFFFFFF),
-    textPrimary: Color(0xFF212121),
-    textSecondary: Color(0xFF757575),
-    brightness: Brightness.light,
-  ),
-  AppTheme(
-    name: '森林绿',
-    primary: Color(0xFF2E7D32),
-    secondary: Color(0xFF66BB6A),
-    background: Color(0xFFFAFAFA),
-    surface: Color(0xFFFFFFFF),
-    textPrimary: Color(0xFF212121),
-    textSecondary: Color(0xFF757575),
-    brightness: Brightness.light,
-  ),
-  AppTheme(
-    name: '日落橙',
-    primary: Color(0xFFE64A19),
-    secondary: Color(0xFFFF7043),
-    background: Color(0xFFFAFAFA),
-    surface: Color(0xFFFFFFFF),
-    textPrimary: Color(0xFF212121),
-    textSecondary: Color(0xFF757575),
-    brightness: Brightness.light,
-  ),
-  AppTheme(
-    name: '薄荷青',
-    primary: Color(0xFF00897B),
-    secondary: Color(0xFF26A69A),
-    background: Color(0xFFFAFAFA),
-    surface: Color(0xFFFFFFFF),
-    textPrimary: Color(0xFF212121),
-    textSecondary: Color(0xFF757575),
-    brightness: Brightness.light,
-  ),
-  // 深色主题（4个）
-  AppTheme(
-    name: '暗夜黑',
-    primary: Color(0xFF90CAF9),
-    secondary: Color(0xFF42A5F5),
-    background: Color(0xFF121212),
-    surface: Color(0xFF1E1E1E),
-    textPrimary: Color(0xFFFFFFFF),
-    textSecondary: Color(0xFFB0B0B0),
-    brightness: Brightness.dark,
-  ),
-  AppTheme(
-    name: '墨绿黑',
-    primary: Color(0xFFA5D6A7),
-    secondary: Color(0xFF66BB6A),
-    background: Color(0xFF121212),
-    surface: Color(0xFF1E1E1E),
-    textPrimary: Color(0xFFFFFFFF),
-    textSecondary: Color(0xFFB0B0B0),
-    brightness: Brightness.dark,
-  ),
-  AppTheme(
-    name: '紫夜',
-    primary: Color(0xFFCE93D8),
-    secondary: Color(0xFFAB47BC),
-    background: Color(0xFF121212),
-    surface: Color(0xFF1E1E1E),
-    textPrimary: Color(0xFFFFFFFF),
-    textSecondary: Color(0xFFB0B0B0),
-    brightness: Brightness.dark,
-  ),
-  AppTheme(
-    name: '琥珀夜',
-    primary: Color(0xFFFFCC80),
-    secondary: Color(0xFFFFB74D),
-    background: Color(0xFF121212),
-    surface: Color(0xFF1E1E1E),
-    textPrimary: Color(0xFFFFFFFF),
-    textSecondary: Color(0xFFB0B0B0),
-    brightness: Brightness.dark,
-  ),
-];
-// 主题预览卡片组件（紧凑版）
-class _ThemePreviewCard extends StatelessWidget {
-  final AppTheme theme;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  _ThemePreviewCard({
-    required this.theme,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: isSelected
-              ? Border.all(width: 2, color: theme.primary)
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 2,
-              offset: Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // 顶部颜色条
-            Container(
-              height: 24,
-              decoration: BoxDecoration(
-                color: theme.primary,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-              ),
-            ),
-            // 主题名字
-            Expanded(
-              child: Center(
-                child: Text(
-                  theme.name,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: theme.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-
-
-
-//
