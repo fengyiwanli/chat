@@ -1,11 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../services/theme_provider.dart';
 import 'character_hub_page.dart';
 import 'novel_hub_page.dart';
 import 'gallery_page.dart';
 import 'settings_page.dart';
 import 'package:path_provider/path_provider.dart';
-
 
 class HomePage extends StatefulWidget {
   final ThemeProvider themeProvider;
@@ -24,22 +23,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    
     _pages.addAll([
       CharacterHubPage(themeProvider: widget.themeProvider),
       const NovelHubPage(),
-      GalleryPage(key: galleryKey), // 传 key
+      GalleryPage(key: galleryKey),
       SettingsPage(themeProvider: widget.themeProvider),
-      
     ]);
   }
 
-
-
-
- 
- 
- 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,18 +38,20 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-  setState(() => _currentIndex = index);
-  if (index == 2) {
-    // 直接调用loadGallery，不需要等一帧（我们已经优化了加载速度）
-    galleryKey.currentState?.loadGallery();
-  }
-},
-
+          setState(() => _currentIndex = index);
+          if (index == 2) galleryKey.currentState?.loadGallery();
+        },
+        animationDuration: const Duration(milliseconds: 400),
+        indicatorColor: const Color(0xFFC7705C).withOpacity(0.12),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        height: 64,
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.chat), label: '聊天'),
-          NavigationDestination(icon: Icon(Icons.book), label: '小说'),
-          NavigationDestination(icon: Icon(Icons.photo_library), label: '图库'),
-          NavigationDestination(icon: Icon(Icons.settings), label: '设置'),
+          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: '聊天'),
+          NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book), label: '小说'),
+          NavigationDestination(icon: Icon(Icons.photo_library_outlined), selectedIcon: Icon(Icons.photo_library), label: '图库'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: '设置'),
         ],
       ),
     );
